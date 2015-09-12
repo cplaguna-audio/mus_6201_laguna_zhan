@@ -14,8 +14,8 @@
 
 function [f0, timeInSec] = myPitchTrack_ACF(x, windowSize, hopSize, fs)
  
-  min_f0 = 20;
-  max_f0 = 15000;
+  min_f0 = 100;
+  max_f0 = 1000;
   
   min_period_hertz = 1 / min_f0;
   min_period_samples = floor(min_period_hertz * fs);
@@ -28,7 +28,7 @@ function [f0, timeInSec] = myPitchTrack_ACF(x, windowSize, hopSize, fs)
   num_blocks = size(x_blocked, 1);
   
   f0 = zeros(num_blocks, 1);
-  timInSec = zeros(num_blocks, 1);
+  timeInSec = zeros(num_blocks, 1);
   
   for block_idx = 1:num_blocks
     block = x_blocked(block_idx, :).';
@@ -60,7 +60,7 @@ function [f0, timeInSec] = myPitchTrack_ACF(x, windowSize, hopSize, fs)
     fundamental_period_hertz = 1 / fundamental_period_seconds;
     
     f0(block_idx) = fundamental_period_hertz;
-    timInSec(block_idx) = (block_idx - 1) * windowSize * (1 / fs);
+    timeInSec(block_idx) = (block_idx - 1) * hopSize * (1 / fs);
   end
 
 end

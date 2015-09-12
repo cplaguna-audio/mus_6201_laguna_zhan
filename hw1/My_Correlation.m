@@ -13,7 +13,7 @@ function [y, shifts] = My_Correlation(a, b)
   b_amount_pad = y_length - b_length;
   b_padding = zeros(b_amount_pad, 1);
   b_padded = [b; b_padding];
-  
+    
   for idx = 1:y_length
     current_a = a_padded(idx:y_length);
     current_b = b_padded(1:y_length - (idx - 1));
