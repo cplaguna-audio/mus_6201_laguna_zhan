@@ -1,8 +1,23 @@
 def load_dictionary():
   """ Load the dictionary into memory."""
-  text_file = open('words.txt')
+  text_file = open('dictionary.txt')
   words = text_file.read().split('\n')
   return words
+
+def load_scrambles():
+  """Load the scrambles into memory."""
+  text_file = open('scrambles.txt')
+  lines = text_file.read().split('\n')
+  scrambles = []
+  for line in lines:
+    scramble = []
+    for character in line:
+      if character != ' ':
+        scramble.append(character)
+
+    scrambles.append(scramble)
+
+  return scrambles
 
 def get_all_valid_words(letters, english_words):
     """Returns all combinations of |letters| that form valid engish words.
@@ -61,7 +76,7 @@ def get_all_letter_combinations(letters):
       other_letters = letters[:idx] + letters[idx + 1:]
 
       # Find all combinations of length < k.
-      smaller_combos = get_all_letter_combinations(other_letters);
+      smaller_combos = get_all_letter_combinations(other_letters)
 
       # Prepend the current letter to all the combinations to get all valid
       # combinations of length <= k. Note: This can create duplicates.
