@@ -19,4 +19,6 @@ function [features] = ExtractFFTBank(audio, block_size, hop_size, num_bands)
       bin_stop = bin_start + num_bins_per_band - 1;
     end
   end
+  
+  features = features(:, 1:5);
 end

@@ -1,4 +1,4 @@
-%% TrainWordClassifier: Trains a word-classifier on a dataset.
+% TrainWordClassifier: Trains a word-classifier on a dataset.
 %
 % word_classifer = TrainWordClassifier(test_datasets, words)
 % Trains a classifier which can recognize isolated words - that is, given
@@ -38,6 +38,8 @@ function word_classifier = TrainWordClassifier(train_datasets, words)
   number_words = size(words, 1);
   word_classifier.templates = cell(number_words, 1);
   word_classifier.labels = cell(number_words, 1);
+  word_classifier.z_score_means = zeros(1, 1);
+  word_classifier.z_score_vars = zeros(1, 1);
   number_datasets = size(train_datasets, 1);
   
   template_idx = 1;
@@ -69,14 +71,49 @@ function word_classifier = TrainWordClassifier(train_datasets, words)
     
     % Extract templates.
     cur_templates = ExtractTemplate(cur_audio_examples, cur_sample_rates);
+    num_features = size(cur_templates{1,1}, 2);
     
-    % Store templates in struct.
+    % Store templates in struct.    
     number_cur_templates = size(cur_templates, 1);
     for cur_template_idx = 1:number_cur_templates
-      word_classifier.templates{template_idx} = ...
-          cur_templates{cur_template_idx, 1};
+      cur_template = cur_templates{cur_template_idx, 1};
+
+      word_classifier.templates{template_idx} = cur_template;
       word_classifier.labels{template_idx, 1} = current_word;
       template_idx = template_idx + 1;
+    end
+  end
+  
+
+  % Calculate whitening variables per feature (z-score whitening).
+  z_score_means = zeros(num_features, 1);
+  z_score_vars = zeros(num_features, 1);
+  
+  number_templates = size(word_classifier.templates, 1);
+  for template_idx = 1:number_templates
+    cur_template = word_classifier.templates{cur_template_idx};
+
+    z_score_means = z_score_means + mean(cur_template).';
+    z_score_vars = z_score_vars + var(cur_template).';
+  end
+  
+  z_score_means = z_score_means ./ number_templates;
+  z_score_vars = z_score_vars ./ number_templates;
+  
+  word_classifier.z_score_means = z_score_means;
+  word_classifier.z_score_vars = z_score_vars;
+  
+  % Apply whitening.
+  number_templates = size(word_classifier.templates, 1);
+  for template_idx = 1:number_templates
+    cur_template = word_classifier.templates{cur_template_idx};
+
+    num_blocks = size(cur_template, 1);
+    for block_idx = 1:num_blocks
+      cur_feature_vector = cur_template(block_idx, :);
+      cur_feature_vector = cur_feature_vector - word_classifier.z_score_means.';
+      cur_feature_vector = cur_feature_vector ./ word_classifier.z_score_vars.';
+      cur_template(block_idx, :) = cur_feature_vector;
     end
   end
   

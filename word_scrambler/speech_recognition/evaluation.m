@@ -5,6 +5,8 @@ function evaluation
   [words, unused_words] = ...
       GetSharedWords('../dataset/dataset_words.txt', datasets);
 
+  words = words(1:15);
+  
   num_words = size(words, 1);
   num_folds = size(datasets, 1);
   error_rates = zeros(num_folds, 1);
@@ -16,7 +18,8 @@ function evaluation
 
     % Train the classifier.
     word_classifier = TrainWordClassifier(test_datasets, words);
-
+    
+    
     num_correct = 0;
     % Test each word.
     for word_idx = 1:num_words
@@ -38,6 +41,8 @@ function evaluation
         error(['Could not find word: ' truth_word ' in dataset: ' ...
                training_dataset '.']);
       end
+      
+      % Normalize Audio
       
       predicted_word = Classify(word_classifier, word_audio, word_fs);
       if(strcmp(truth_word, predicted_word))

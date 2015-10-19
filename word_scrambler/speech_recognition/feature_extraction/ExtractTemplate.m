@@ -17,7 +17,7 @@ function templates = ExtractTemplate(audio_examples, sample_rates)
     normalized_audio = normalized_audio ./ max(abs(normalized_audio));
 
     % Crop out silence.
-    [start, stop] = VocalActivityEndpoints(normalized_audio, current_fs);
+    [start, stop] = VocalActivityEndpoints(normalized_audio);
 
     cropped_audio = normalized_audio(start:stop, 1);
 
