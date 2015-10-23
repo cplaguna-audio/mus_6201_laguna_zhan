@@ -1,5 +1,5 @@
 function prediction = Classify(word_classifier, audio, fs)
-  new_template = ExtractTemplate({audio}, {fs});
+  new_template = ExtractTemplate({audio}, [fs]);
   new_template = new_template{1, 1};
   
   % Whiten the template.
@@ -21,5 +21,5 @@ function prediction = Classify(word_classifier, audio, fs)
   end
   
   [~, min_idx] = min(distances);
-  prediction = word_classifier.labels(min_idx);
+  prediction = word_classifier.labels{min_idx};
 end

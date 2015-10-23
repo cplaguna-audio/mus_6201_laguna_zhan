@@ -91,7 +91,7 @@ function word_classifier = TrainWordClassifier(train_datasets, words)
   
   number_templates = size(word_classifier.templates, 1);
   for template_idx = 1:number_templates
-    cur_template = word_classifier.templates{cur_template_idx};
+    cur_template = word_classifier.templates{template_idx};
 
     z_score_means = z_score_means + mean(cur_template).';
     z_score_vars = z_score_vars + var(cur_template).';
@@ -106,7 +106,7 @@ function word_classifier = TrainWordClassifier(train_datasets, words)
   % Apply whitening.
   number_templates = size(word_classifier.templates, 1);
   for template_idx = 1:number_templates
-    cur_template = word_classifier.templates{cur_template_idx};
+    cur_template = word_classifier.templates{template_idx};
 
     num_blocks = size(cur_template, 1);
     for block_idx = 1:num_blocks
@@ -115,6 +115,7 @@ function word_classifier = TrainWordClassifier(train_datasets, words)
       cur_feature_vector = cur_feature_vector ./ word_classifier.z_score_vars.';
       cur_template(block_idx, :) = cur_feature_vector;
     end
+    word_classifier.templates{template_idx} = cur_template;
   end
   
 end

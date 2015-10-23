@@ -1,5 +1,6 @@
 function templates = ExtractTemplate(audio_examples, sample_rates)
   FEATURES = 'fft-bank';  % 'fft-bank', 'mfcc'.
+  FS = 22050;
   BLOCK_SIZE = 1024;
   HOP_SIZE = 512;
   NUM_BANDS = 16;
@@ -10,9 +11,13 @@ function templates = ExtractTemplate(audio_examples, sample_rates)
   for example_idx = 1:num_examples
     current_audio = audio_examples{example_idx, 1};
     current_fs = sample_rates(example_idx, 1);
+    
     % Normalize audio.
+    % Same fs.
+    normalized_audio = resample(current_audio, FS, current_fs);
+    
     % Multichannel to mono.
-    normalized_audio = sum(current_audio, 2);
+    normalized_audio = sum(normalized_audio, 2);
     % Peak level normalization.
     normalized_audio = normalized_audio ./ max(abs(normalized_audio));
 
@@ -35,6 +40,9 @@ function templates = ExtractTemplate(audio_examples, sample_rates)
     example_templates{example_idx, 1} = current_template;
   end
   
+  % Use multiple templates
+  templates = example_templates;
+  % OR, 
   % Aggregate multiple templates into single template.
-  templates{1, 1} = example_templates{1, 1};
+  % templates{1, 1} = example_templates{1, 1};
 end

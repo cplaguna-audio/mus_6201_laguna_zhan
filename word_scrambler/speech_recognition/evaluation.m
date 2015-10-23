@@ -1,36 +1,38 @@
 function evaluation
+  DEBUG = false;
+
   datasets = {'google'; 'lingoes'; 'merriam_webster'};
 
   % The words in our dataset.
-  [words, unused_words] = ...
-      GetSharedWords('../dataset/dataset_words.txt', datasets);
+  [words, unused_words] = GetSharedWords('../dataset/dataset_words.txt', datasets);
 
-  words = words(1:15);
-  
   num_words = size(words, 1);
   num_folds = size(datasets, 1);
   error_rates = zeros(num_folds, 1);
 
   % Loop through all folds.
   for fold_idx = 1:num_folds
-    training_dataset = datasets{fold_idx};
-    test_datasets = {datasets{1:fold_idx - 1}; datasets{fold_idx + 1:end}};
+    testing_dataset = datasets{fold_idx};
+    training_datasets = {datasets{1:fold_idx - 1} datasets{fold_idx + 1:end}}';
 
     % Train the classifier.
-    word_classifier = TrainWordClassifier(test_datasets, words);
-    
+    word_classifier = TrainWordClassifier(training_datasets, words);
     
     num_correct = 0;
     % Test each word.
     for word_idx = 1:num_words
+      if(mod(word_idx, 2) == 1)
+        % disp(word_idx);
+      end
+      
       truth_word = words{word_idx, 1};
       first_letter = truth_word(1);
       word_audio = 0;
       word_fs = 0;
       
-      word_mp3_path = ['../dataset/' training_dataset '/' first_letter '/' ...
+      word_mp3_path = ['../dataset/' testing_dataset '/' first_letter '/' ...
                        truth_word '.mp3'];
-      word_wav_path = ['../dataset/' training_dataset '/' first_letter '/' ...
+      word_wav_path = ['../dataset/' testing_dataset '/' first_letter '/' ...
                        truth_word '.wav'];
                      
       if exist(word_mp3_path, 'file') == 2
@@ -43,8 +45,15 @@ function evaluation
       end
       
       % Normalize Audio
+      if(DEBUG == true)
+        disp(['Classifying audio for the word *' truth_word '*.']);  
+      end
       
       predicted_word = Classify(word_classifier, word_audio, word_fs);
+      if(DEBUG == true)
+        disp(['Prediction: *' predicted_word '*.']);  
+      end
+      
       if(strcmp(truth_word, predicted_word))
         num_correct = num_correct + 1;
       end
