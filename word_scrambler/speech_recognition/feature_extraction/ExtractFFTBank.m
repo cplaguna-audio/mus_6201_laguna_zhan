@@ -1,6 +1,6 @@
 % |num_bands|-band filter bank extracted by averaging over magnitude 
 % spectrum. Bands are spaced equally in frequency. 
-% features: NxM float matrix, N -> time, M -> frequency
+% features: NxM float matrix, N -> time, M -> features
 function [features] = ExtractFFTBank(audio, block_size, hop_size, num_bands)
   blocked_audio = BlockSignal(audio, block_size, hop_size);
   num_blocks = size(blocked_audio, 1);

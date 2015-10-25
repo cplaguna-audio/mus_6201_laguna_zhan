@@ -51,19 +51,8 @@ function word_classifier = TrainWordClassifier(train_datasets, words)
     % Read the audio examples from each dataset.
     for dataset_idx = 1:number_datasets
       cur_dataset = train_datasets{dataset_idx, 1};
-      word_path = GetWordPathInDataset(current_word, cur_dataset);
-      cur_audio = [];
-      cur_fs = -1;
-      
-      word_mp3_path = [word_path '.mp3'];
-      word_wav_path = [word_path '.wav'];
-      if (exist(word_mp3_path, 'file') == 2)
-        [cur_audio, cur_fs] = audioread(word_mp3_path);
-      elseif(exist(word_wav_path, 'file') == 2)
-        [cur_audio, cur_fs] = audioread(word_wav_path);
-      else
-        error([current_word 'not found in database: ' cur_dataset]);
-      end
+      word_path = GetWordPathInDataset(current_word, cur_dataset);      
+      [cur_audio, cur_fs] = LoadWordAudio(current_word, cur_dataset);
       
       cur_audio_examples{dataset_idx, 1} = cur_audio;
       cur_sample_rates(dataset_idx, 1) = cur_fs;

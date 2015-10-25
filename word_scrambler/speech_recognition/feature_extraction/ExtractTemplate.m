@@ -1,9 +1,10 @@
 function templates = ExtractTemplate(audio_examples, sample_rates)
-  FEATURES = 'fft-bank';  % 'fft-bank', 'mfcc'.
+  FEATURES = 'good';  % 'fft-bank', 'mfcc', 'spectral', 'good'
   FS = 22050;
   BLOCK_SIZE = 1024;
   HOP_SIZE = 512;
   NUM_BANDS = 16;
+  NUM_MFCCS = 20;
   templates = {};
   
   num_examples = size(audio_examples, 1);
@@ -32,7 +33,11 @@ function templates = ExtractTemplate(audio_examples, sample_rates)
       current_template = ExtractFFTBank(cropped_audio, BLOCK_SIZE, ...
                                         HOP_SIZE, NUM_BANDS);
     elseif(strcmp(FEATURES, 'mfcc'))
-      error('mfccs are not yet supported');
+      current_template = ExtractMFCCs(cropped_audio, BLOCK_SIZE, HOP_SIZE, current_fs, NUM_MFCCS);
+    elseif(strcmp(FEATURES, 'spectral'))
+      current_template = ExtractSpectralFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE);
+    elseif(strcmp(FEATURES, 'good'))
+      current_template = ExtractGoodFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE, current_fs);
     else
       error([FEATURES 'is not a valid FEATURES option.']);
     end
@@ -42,6 +47,7 @@ function templates = ExtractTemplate(audio_examples, sample_rates)
   
   % Use multiple templates
   templates = example_templates;
+  
   % OR, 
   % Aggregate multiple templates into single template.
   % templates{1, 1} = example_templates{1, 1};
