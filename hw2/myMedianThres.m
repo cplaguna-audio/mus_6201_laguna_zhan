@@ -1,4 +1,4 @@
-%% Adaptive threshold: median filter
+% Adaptive threshold: median filter
 % [thres] = myMedianThres(nvt, order, lambda)
 % input: 
 %   nvt: m by 1 float vector, the novelty function

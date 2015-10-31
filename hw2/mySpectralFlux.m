@@ -1,5 +1,5 @@
-%% Novelty function: spectral flux
-% [nvt] = myPeakEnv(x, w, windowSize, hopSize)
+% Novelty function: spectral flux
+% [nvt] = mySpectralFlux(x, windowSize, hopSize)
 % input: 
 %   x: N by 1 float vector, input signal
 %   windowSize: int, number of samples per block

@@ -1,4 +1,4 @@
-%% Standard evaluation metrics 
+% Standard evaluation metrics 
 % [precision, recall, fmeasure] = evaluateOnsets(onsetTimeInSec, annotation, deltaTime)
 % intput:
 %   onsetTimeInSec: n by 1 float vector, detected onset time in second
@@ -46,10 +46,25 @@ function [precision, recall, fmeasure] = ...
   % Any remaining predictions are false positives.
   num_false_positives = size(predictions, 1);
   
-  precision = num_true_positives / ...
-              (num_true_positives + num_false_positives);
-  recall = num_true_positives / ...
-           (num_true_positives + num_false_negatives);
-         
-  fmeasure = (2 * precision * recall) / (precision + recall);
+  % Calculate precision, recall, and f_measure. Handle 0-valued
+  % denominators.
+  if((num_true_positives + num_false_positives) == 0)
+      precision = 0;
+  else
+    precision = num_true_positives / ...
+                (num_true_positives + num_false_positives);
+  end
+  
+  if((num_true_positives + num_false_negatives) == 0)
+      recall = 0;
+  else
+    recall = num_true_positives / ...
+             (num_true_positives + num_false_negatives);
+  end  
+  
+  if(precision + recall == 0)
+      fmeasure = 0;
+  else
+    fmeasure = (2 * precision * recall) / (precision + recall);
+  end
 end

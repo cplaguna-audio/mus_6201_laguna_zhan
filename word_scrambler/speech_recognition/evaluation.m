@@ -5,11 +5,11 @@ function evaluation
 
   % The words in our dataset.
   [words, unused_words] = GetSharedWords('../dataset/dataset_words.txt', datasets);
-
+  words = words(1:10);
   num_words = size(words, 1);
   num_folds = size(datasets, 1);
   error_rates = zeros(num_folds, 1);
-
+  
   % Loop through all folds.
   for fold_idx = 1:num_folds
     testing_dataset = datasets{fold_idx};

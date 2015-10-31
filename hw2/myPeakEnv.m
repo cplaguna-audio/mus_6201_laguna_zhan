@@ -1,5 +1,5 @@
-%% Novelty function: peak envelope
-% [nvt] = myPeakEnv(x, w, windowSize, hopSize)
+% Novelty function: peak envelope
+% [nvt] = myPeakEnv(x, windowSize, hopSize)
 % input: 
 %   x: N by 1 float vector, input signal
 %   windowSize: int, number of samples per block
