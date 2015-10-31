@@ -1,11 +1,12 @@
 function evaluation
-  DEBUG = false;
+  DEBUG = true;
 
-  datasets = {'google'; 'lingoes'; 'merriam_webster'};
+  datasets = {'lingoes'; 'merriam_webster'}; %google;
 
   % The words in our dataset.
   [words, unused_words] = GetSharedWords('../dataset/dataset_words.txt', datasets);
   words = words(1:10);
+
   num_words = size(words, 1);
   num_folds = size(datasets, 1);
   error_rates = zeros(num_folds, 1);
@@ -24,25 +25,9 @@ function evaluation
       if(mod(word_idx, 2) == 1)
         % disp(word_idx);
       end
-      
+
       truth_word = words{word_idx, 1};
-      first_letter = truth_word(1);
-      word_audio = 0;
-      word_fs = 0;
-      
-      word_mp3_path = ['../dataset/' testing_dataset '/' first_letter '/' ...
-                       truth_word '.mp3'];
-      word_wav_path = ['../dataset/' testing_dataset '/' first_letter '/' ...
-                       truth_word '.wav'];
-                     
-      if exist(word_mp3_path, 'file') == 2
-        [word_audio, word_fs] = audioread(word_mp3_path);
-      elseif (exist(word_wav_path, 'file') == 2)
-        [word_audio, word_fs] = audioread(word_wav_path);
-      else
-        error(['Could not find word: ' truth_word ' in dataset: ' ...
-               training_dataset '.']);
-      end
+      [word_audio, word_fs] = LoadWordAudio(truth_word, testing_dataset);
       
       % Normalize Audio
       if(DEBUG == true)
