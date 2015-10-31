@@ -17,10 +17,11 @@ function [features] = ExtractSpectralFeatures(audio, block_size, hop_size)
     cur_spread = SpectralSpread(cur_mag, cur_centroid);
     cur_left_slope = SpectralLeftSlope(cur_mag, cur_centroid);
     cur_right_slope = SpectralRightSlope(cur_mag, cur_centroid);
+    cur_flatness = SpectralFlatness(cur_mag);
     
-    features(block_idx, 1:5) = [cur_centroid; cur_crest; cur_spread; cur_left_slope; cur_right_slope];
+    features(block_idx, 1:6) = [cur_centroid; cur_crest; cur_spread; cur_left_slope; cur_right_slope; cur_flatness];
   end
   
   flux = SpectralFlux(blocked_mag);
-  features(:, 6) = flux;
+  features(:, 7) = flux;
 end

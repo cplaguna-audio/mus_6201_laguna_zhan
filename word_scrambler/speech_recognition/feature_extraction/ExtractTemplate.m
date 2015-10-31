@@ -1,8 +1,8 @@
 function templates = ExtractTemplate(audio_examples, sample_rates)
-  FEATURES = 'good';  % 'fft-bank', 'mfcc', 'spectral', 'good'
+  FEATURES = 'spectral';  % 'fft-bank', 'mfcc', 'spectral', 'good'
   FS = 22050;
   BLOCK_SIZE = 1024;
-  HOP_SIZE = 512;
+  HOP_SIZE = 256;
   NUM_BANDS = 16;
   NUM_MFCCS = 20;
   templates = {};

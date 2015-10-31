@@ -1,11 +1,11 @@
 function evaluation
   DEBUG = true;
 
-  datasets = {'lingoes'; 'google'; 'merriam_webster'};
+  datasets = {'lingoes'; 'merriam_webster'}; %google;
 
   % The words in our dataset.
   [words, unused_words] = GetSharedWords('../dataset/dataset_words.txt', datasets);
-  words = words(1:10);
+  words = words(1:50);
   num_words = size(words, 1);
   num_folds = size(datasets, 1);
   error_rates = zeros(num_folds, 1);
