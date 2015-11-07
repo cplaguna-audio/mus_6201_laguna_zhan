@@ -1,5 +1,10 @@
 clear;
-load getMetaData;
+COMPUTE_FEATURES = true;
+if(COMPUTE_FEATURES)
+  [features, labels] = getMetaData();
+else
+  load getMetaData.mat
+end
 
 % z-score whitening.
 [num_features, num_data] = size(features);
@@ -16,4 +21,6 @@ for feature_idx = 1:num_features
   features(feature_idx, :) = cur_features;
 end
 
-covariance = MyCovariance(features);
+covariance = MyCovariance(features)
+imagesc(abs(covariance));
+title('Absolute Value of Covariance Matrix of Features');

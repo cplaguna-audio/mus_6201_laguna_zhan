@@ -1,5 +1,11 @@
 clear;
-load getMetaData
+
+COMPUTE_FEATURES = true;
+if(COMPUTE_FEATURES)
+  [features, labels] = getMetaData();
+else
+  load getMetaData.mat
+end
 
 feature_x_labels = {'Mean Spectral Centrod'; 'Mean Spectral Flux'; 'Mean Maximum Envelope'; ...
                     'STD Zero Crossing Rate'; 'STD Spectral Centroid'};
