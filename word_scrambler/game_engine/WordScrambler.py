@@ -2,6 +2,7 @@ from Tkinter import *
 from math import floor
 import time
 from threading import Timer
+from random import randint
 
 class WordScrambler:
 
@@ -19,6 +20,10 @@ class WordScrambler:
     # Create the interface.
     self.game_width = 400;
     debug = False
+    
+    self.TOTAL_NUMBER_SCRAMBLES = 15
+    self.SCRAMBLE_PATH = "./scrambles/"
+    self.scramble_id = -1
 
     self.root = Tk()
     Grid.columnconfigure(self.root, 0, weight=1)
@@ -90,13 +95,26 @@ class WordScrambler:
     self.root.mainloop()
 
 
+  def set_scramble(self):
+    next_id = randint(0, self.TOTAL_NUMBER_SCRAMBLES)
+    while(next_id == self.scramble_id):
+      next_id = randint(0, self.TOTAL_NUMBER_SCRAMBLES)
+    self.scramble_id = next_id
+
+    scramble_file_name = self.SCRAMBLE_PATH + 'scramble' + str(self.scramble_id) + '.txt'
+    scramble_file = open(scramble_file_name)
+    scramble_lines = scramble_file.read().split('\n')
+    self.scramble_letters = list(scramble_lines[0])
+    self.scramble_words = scramble_lines[1:]
+    self.scramble_words =[a for a in self.scramble_words if a]
+    print self.scramble_letters
+    print self.scramble_words
+
   # The game is finished, so remove display and reset state.
   def flush_game(self):
     self.num_words_displayed = 0
     self.score = -1
     self.time_remaining = -1
-    self.scramble_letters = ['a', 'b', 'y', 'i', 'n', 'g']
-    self.scramble_words = ['rithesh', 'chris', 'ying', 'stupid', 'unsmart']
 
     # Kill all the babies (guessed words) in the words container.
     for baby in self.words_container.winfo_children():
@@ -105,6 +123,7 @@ class WordScrambler:
   # Look up new scramble and begin the new game.
   def start_game(self):
     self.playing_game = True
+    self.set_scramble()
     self.score = 0
     self.time_remaining = self.game_time
     self.prompt_text = "Find Words Out Of The Letters Below"
