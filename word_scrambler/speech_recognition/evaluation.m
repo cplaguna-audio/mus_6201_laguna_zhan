@@ -1,54 +1,32 @@
-function evaluation
+function evaluation  
   DEBUG = true;
 
-  datasets = {'lingoes'; 'merriam_webster'}; %google;
+  datasets = {'chris_2'; 'chris'; 'ashis'}; % 'lingoes'; 
 
   % The words in our dataset.
   [words, unused_words] = GetSharedWords('../dataset/dataset_words.txt', datasets);
-  words = words(1:10);
+  words = words(1:15);
 
   num_words = size(words, 1);
   num_folds = size(datasets, 1);
   error_rates = zeros(num_folds, 1);
   
-  % Loop through all folds.
-  for fold_idx = 1:num_folds
-    testing_dataset = datasets{fold_idx};
-    training_datasets = {datasets{1:fold_idx - 1} datasets{fold_idx + 1:end}}';
+  [templates, labels] = GetWordTemplates(datasets, words);
+  % [selected_features, accuracies] = ForwardSelection(templates, labels);
+  
+  % word = 'rob';
+  word_idx = 2;
+  figure();
+  ax1 = subplot(3,1,1);
+  imagesc(templates{word_idx, 1})
+  ax2 = subplot(3,1,2);
+  imagesc(templates{word_idx, 2})
+%   ax3 = subplot(3,1,3);
+%   imagesc(templates{word_idx, 3})
+  linkaxes([ax1, ax2])
 
-    % Train the classifier.
-    word_classifier = TrainWordClassifier(training_datasets, words);
-    
-    num_correct = 0;
-    % Test each word.
-    for word_idx = 1:num_words
-      if(mod(word_idx, 2) == 1)
-        % disp(word_idx);
-      end
-
-      truth_word = words{word_idx, 1};
-      [word_audio, word_fs] = LoadWordAudio(truth_word, testing_dataset);
-      
-      % Normalize Audio
-      if(DEBUG == true)
-        disp(['Classifying audio for the word *' truth_word '*.']);  
-      end
-      
-      predicted_word = Classify(word_classifier, word_audio, word_fs);
-      if(DEBUG == true)
-        disp(['Prediction: *' predicted_word '*.']);  
-      end
-      
-      if(strcmp(truth_word, predicted_word))
-        num_correct = num_correct + 1;
-      end
-    end
-
-    current_error_rate = 1 - (num_correct / num_words);
-    error_rates(fold_idx) = current_error_rate;
-    disp(['Error rate for test dataset ' datasets{fold_idx} ': ' ...
-          num2str(current_error_rate * 100) '%']);
-  end
+  error_rate = CrossDatasetValidation(templates, labels, DEBUG);
+  disp(['Error rate: ' num2str(error_rate) '.']);
 end
 
 % Returns a list (Nx1 cell of strings) of the words from the |word_file|
@@ -94,5 +72,33 @@ function is_in_datasets = IsWordInDatasets(word, datasets)
          (exist(word_wav_path, 'file') == 2))
       is_in_datasets = false;
     end  
+  end
+end
+
+function [templates, labels] = GetWordTemplates(datasets, words)
+  number_words = size(words, 1);
+  number_datasets = size(datasets, 1);
+
+  templates = cell(number_words, number_datasets);
+  labels = cell(number_words, 1);
+  
+  for word_idx = 1:number_words
+    current_word = words{word_idx, 1};
+    cur_audio_examples = cell(number_datasets, 1);
+    cur_sample_rates = zeros(number_datasets, 1);
+    
+    % Read the audio examples from each dataset.
+    for dataset_idx = 1:number_datasets
+      cur_dataset = datasets{dataset_idx, 1};
+      [cur_audio, cur_fs] = LoadWordAudio(current_word, cur_dataset);
+      
+      cur_audio_examples{dataset_idx, 1} = cur_audio;
+      cur_sample_rates(dataset_idx, 1) = cur_fs;
+    end
+    
+    % Extract templates.
+    cur_templates = ExtractTemplate(cur_audio_examples, cur_sample_rates);
+    templates(word_idx, :) = cur_templates.';   
+    labels{word_idx} = current_word;
   end
 end

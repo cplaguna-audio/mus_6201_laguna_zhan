@@ -1,9 +1,7 @@
 % features: NxM float matrix, N -> time, M -> features
-function [features] = ExtractGoodFeatures(audio, block_size, hop_size, fs)
-  NUM_SPECTRAL_FEATURES = 5;
+function [features] = ExtractHackFeatures(audio, block_size, hop_size, fs)
   NUM_MFCCS = 20;
-  
-  num_features = 36; % NUM_SPECTRAL_FEATURES + NUM_MFCCS;
+  num_features = 1; % NUM_SPECTRAL_FEATURES + NUM_MFCCS;
   blocked_audio = BlockSignal(audio, block_size, hop_size);
   blocked_audio = blocked_audio.';
   num_blocks = size(blocked_audio, 2);
@@ -23,25 +21,33 @@ function [features] = ExtractGoodFeatures(audio, block_size, hop_size, fs)
     cur_right_slope = SpectralRightSlope(cur_mag, cur_centroid);
     cur_flatness = SpectralFlatness(cur_mag);
     
-    features(block_idx, 31:35) = ...
-        [cur_centroid; cur_crest; cur_spread; cur_left_slope; ...
-         cur_right_slope];
+%     features(block_idx, 31:35) = ...
+%         [cur_centroid; cur_crest; cur_spread; cur_left_slope; ...
+%          cur_right_slope];
     
     cur_block = blocked_audio(:, block_idx);
 
 %     % MFCCs
-    mfcc_start = NUM_SPECTRAL_FEATURES + 1;
-    mfcc_stop = mfcc_start + NUM_MFCCS - 1;
-    features(block_idx, 11:30) = MFCC(cur_block, NUM_MFCCS, fs).';
+    mfccs = MFCC(cur_block, NUM_MFCCS, fs).';
     
-    % Cepstrum
+    features(block_idx, 1) = mfccs(3);
+    features(block_idx, 2) = mfccs(9);
+    features(block_idx, 3) = mfccs(20);
+%     
+%     % Cepstrum
     cepstrum = Cepstrum(cur_block);
-    features(block_idx, 1:10) = cepstrum(1:10).';
+    features(block_idx, 4) = cepstrum(1);
+    features(block_idx, 5) = cepstrum(4);
+    features(block_idx, 6) = cepstrum(5);
+    features(block_idx, 7) = cepstrum(6);
+    features(block_idx, 8) = cepstrum(8);
+    features(block_idx, 9) = cepstrum(10);
+    features(block_idx, 10) = cur_spread;
   end
   
   % Filterbanks!
   % features(:, 31:35) = ExtractFFTBank(audio, block_size, hop_size, 16);
 
   flux = SpectralFlux(blocked_mag);
-  features(:, 36) = flux;
+  features(:, 11) = flux;
 end

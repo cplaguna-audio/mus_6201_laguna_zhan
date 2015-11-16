@@ -1,8 +1,8 @@
 function templates = ExtractTemplate(audio_examples, sample_rates)
-  FEATURES = 'spectral';  % 'fft-bank', 'mfcc', 'spectral', 'good'
-  FS = 22050;
+  FEATURES = 'good';  % 'cepstral, 'fft-bank', 'mfcc', 'spectral', 'good', 'hack'
+  FS = 11025;
   BLOCK_SIZE = 1024;
-  HOP_SIZE = 256;
+  HOP_SIZE = 512;
   NUM_BANDS = 16;
   NUM_MFCCS = 20;
   templates = {};
@@ -36,8 +36,12 @@ function templates = ExtractTemplate(audio_examples, sample_rates)
       current_template = ExtractMFCCs(cropped_audio, BLOCK_SIZE, HOP_SIZE, current_fs, NUM_MFCCS);
     elseif(strcmp(FEATURES, 'spectral'))
       current_template = ExtractSpectralFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE);
+    elseif(strcmp(FEATURES, 'cepstral'))
+      current_template = ExtractCepstralFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE);
     elseif(strcmp(FEATURES, 'good'))
       current_template = ExtractGoodFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE, current_fs);
+    elseif(strcmp(FEATURES, 'hack'))
+      current_template = ExtractHackFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE, current_fs);
     else
       error([FEATURES 'is not a valid FEATURES option.']);
     end
