@@ -1,10 +1,9 @@
 function templates = ExtractTemplate(audio_examples, sample_rates)
-  FEATURES = 'good';  % 'cepstral, 'fft-bank', 'mfcc', 'spectral', 'good', 'hack'
-  FS = 11025;
-  BLOCK_SIZE = 1024;
-  HOP_SIZE = 512;
+  FS = 16000;
+  BLOCK_SIZE = 2048;
+  HOP_SIZE = 1024;
   NUM_BANDS = 16;
-  NUM_MFCCS = 20;
+  NUM_MFCCS = 13;
   templates = {};
   
   num_examples = size(audio_examples, 1);
@@ -17,34 +16,23 @@ function templates = ExtractTemplate(audio_examples, sample_rates)
     % Same fs.
     normalized_audio = resample(current_audio, FS, current_fs);
     
+    normalized_audio = BandPass(normalized_audio, FS, 200, 7000);
+    
+    % Crop out silence.
+    [start, stop] = VocalActivityEndpoints(normalized_audio);
+    if(start == -1)
+      example_templates{example_idx, 1} = [];
+      continue;
+    end
     % Multichannel to mono.
     normalized_audio = sum(normalized_audio, 2);
     % Peak level normalization.
     normalized_audio = normalized_audio ./ max(abs(normalized_audio));
 
-    % Crop out silence.
-    [start, stop] = VocalActivityEndpoints(normalized_audio);
-
     cropped_audio = normalized_audio(start:stop, 1);
 
     % Extract features.
-    current_template = {};
-    if(strcmp(FEATURES, 'fft-bank'))
-      current_template = ExtractFFTBank(cropped_audio, BLOCK_SIZE, ...
-                                        HOP_SIZE, NUM_BANDS);
-    elseif(strcmp(FEATURES, 'mfcc'))
-      current_template = ExtractMFCCs(cropped_audio, BLOCK_SIZE, HOP_SIZE, current_fs, NUM_MFCCS);
-    elseif(strcmp(FEATURES, 'spectral'))
-      current_template = ExtractSpectralFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE);
-    elseif(strcmp(FEATURES, 'cepstral'))
-      current_template = ExtractCepstralFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE);
-    elseif(strcmp(FEATURES, 'good'))
-      current_template = ExtractGoodFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE, current_fs);
-    elseif(strcmp(FEATURES, 'hack'))
-      current_template = ExtractHackFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE, current_fs);
-    else
-      error([FEATURES 'is not a valid FEATURES option.']);
-    end
+    current_template = ExtractAllFeatures(cropped_audio, BLOCK_SIZE, HOP_SIZE, FS);
     
     example_templates{example_idx, 1} = current_template;
   end

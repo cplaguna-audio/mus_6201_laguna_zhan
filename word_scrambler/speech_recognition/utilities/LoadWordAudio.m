@@ -1,9 +1,8 @@
 function [audio, fs] = LoadWordAudio(word, dataset)
   first_letter = word(1);
-  word_mp3_path = ['../dataset/' dataset '/' first_letter '/' ...
-                   word '.mp3'];
-  word_wav_path = ['../dataset/' dataset '/' first_letter '/' ...
-                   word '.wav'];
+  word_path = GetAudioPath(word, dataset);
+  word_mp3_path = [word_path word '.mp3'];
+  word_wav_path = [word_path word '.wav'];
 
   if exist(word_mp3_path, 'file') == 2
     [audio, fs] = audioread(word_mp3_path);

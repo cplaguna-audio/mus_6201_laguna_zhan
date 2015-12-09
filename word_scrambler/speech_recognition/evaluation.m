@@ -1,78 +1,58 @@
 function evaluation  
   DEBUG = true;
 
-  datasets = {'chris_2'; 'chris'; 'ashis'}; % 'lingoes'; 
+  datasets = {'jonny_big'; 'chris_big'; 'avrosh_big'; 'brandon_big'; ...
+              'rithesh_big'; 'shi_big'; 'chih_big'; 'lea_big'; ...
+              'ying_big' }; 
+  num_datasets = size(datasets, 1);
+%   datasets = {'manual/chris_big'; 'manual/chris_small'};
 
   % The words in our dataset.
-  [words, unused_words] = GetSharedWords('../dataset/dataset_words.txt', datasets);
-  words = words(1:15);
+%   words = GetSharedWords('../dataset/good_words.txt', datasets);
+%   words = words(1:55);
+%   [templates, labels] = GetWordTemplates(datasets, words);
+%   error_rates = CrossDatasetValidation(templates, labels, 5, DEBUG);
+%   disp(['  Error rate: ' num2str(mean(error_rates)) '.']);
+  
+  Ks = [5];
 
-  num_words = size(words, 1);
-  num_folds = size(datasets, 1);
-  error_rates = zeros(num_folds, 1);
-  
-  [templates, labels] = GetWordTemplates(datasets, words);
-  % [selected_features, accuracies] = ForwardSelection(templates, labels);
-  
-  % word = 'rob';
-  word_idx = 2;
-  figure();
-  ax1 = subplot(3,1,1);
-  imagesc(templates{word_idx, 1})
-  ax2 = subplot(3,1,2);
-  imagesc(templates{word_idx, 2})
-%   ax3 = subplot(3,1,3);
-%   imagesc(templates{word_idx, 3})
-  linkaxes([ax1, ax2])
+  scramble_path = '../game_engine/scrambles/';
+  NUM_SCRAMBLES = 15;
+  error_rates = zeros(NUM_SCRAMBLES, num_datasets);
+  num_scramble_words = zeros(NUM_SCRAMBLES, 1);
+  for k_idx = 1:length(Ks)
+    cur_k = Ks(k_idx);
+    for scramble_idx = 1:NUM_SCRAMBLES
+      cur_file = ['scramble' num2str(scramble_idx - 1) '.txt'];
+      cur_path = [scramble_path cur_file];
+      cur_scramble_words = GetSharedWords(cur_path, datasets);
+      num_scramble_words(scramble_idx) = length(cur_scramble_words);
 
-  error_rate = CrossDatasetValidation(templates, labels, DEBUG);
-  disp(['Error rate: ' num2str(error_rate) '.']);
-end
-
-% Returns a list (Nx1 cell of strings) of the words from the |word_file|
-% file for which there exists a corresponding audio file in every dataset.
-function [shared_words, unused_words] = GetSharedWords(word_file, datasets)
-  candidate_words = {};
-  shared_words = {};
-  unused_words = {};
-  
-  % Parsing file for words.
-  fid = fopen(word_file);
-
-  new_word = fgetl(fid);
-  while ischar(new_word)
-    candidate_words = [candidate_words; new_word];
-    new_word = fgetl(fid);
-  end
-  
-  fclose(fid);
-  
-  num_words = size(candidate_words, 1);
-  for idx = 1:num_words
-    current_candidate = candidate_words{idx};
-    if IsWordInDatasets(current_candidate, datasets)
-      shared_words = [shared_words; current_candidate];
-    else 
-      unused_words = [unused_words; current_candidate];
+      [templates, labels] = GetWordTemplates(datasets, cur_scramble_words);
+      cur_errors = CrossDatasetValidation(templates, labels, cur_k, DEBUG);
+      error_rates(scramble_idx, :) = cur_errors;
     end
+    
+    disp(['K: ' num2str(cur_k)]);
+    for scramble_idx = 1:NUM_SCRAMBLES
+      fprintf('Scramble %d\n-----------\nBy dataset -  ', scramble_idx);
+      for dataset_idx = 1:num_datasets
+        fprintf('%d: %0.4f, ', dataset_idx, error_rates(scramble_idx, dataset_idx));
+      end
+      scramble_error = mean(error_rates(scramble_idx, :));
+      cur_num_words = num_scramble_words(scramble_idx);
+      fprintf('\nAverage error: %0.4f, Num words in scramble: %d\n\n', scramble_error, cur_num_words);  
+    end
+    fprintf('Errors by Dataset\n-----------------\n');
+    for dataset_idx = 1:num_datasets
+      dataset_error = mean(error_rates(:, dataset_idx));
+      fprintf('%d: %0.4f, ', dataset_idx, dataset_error);
+    end
+    fprintf('\n\n');
+    mean_error = mean(mean(error_rates));
+    fprintf('Mean Error: %0.4f\n\n\n', mean_error);
   end
-  
-end
-
-% Checks if the dataset contains the given word.
-function is_in_datasets = IsWordInDatasets(word, datasets)
-  num_datasets = size(datasets, 1);
-  is_in_datasets = true;
-  for idx = 1:num_datasets
-    cur_dataset = datasets{idx};
-    word_path = GetWordPathInDataset(word, cur_dataset);
-    word_mp3_path = [word_path '.mp3'];
-    word_wav_path = [word_path '.wav'];
-    if ~((exist(word_mp3_path, 'file') == 2) || ...
-         (exist(word_wav_path, 'file') == 2))
-      is_in_datasets = false;
-    end  
-  end
+    
 end
 
 function [templates, labels] = GetWordTemplates(datasets, words)
@@ -87,18 +67,25 @@ function [templates, labels] = GetWordTemplates(datasets, words)
     cur_audio_examples = cell(number_datasets, 1);
     cur_sample_rates = zeros(number_datasets, 1);
     
+    cur_templates = {};
     % Read the audio examples from each dataset.
     for dataset_idx = 1:number_datasets
       cur_dataset = datasets{dataset_idx, 1};
-      [cur_audio, cur_fs] = LoadWordAudio(current_word, cur_dataset);
+      cur_template_path = GetFeaturePath(current_word, cur_dataset);
+      cur_template_path = [cur_template_path current_word '.txt'];
       
-      cur_audio_examples{dataset_idx, 1} = cur_audio;
-      cur_sample_rates(dataset_idx, 1) = cur_fs;
+      fid = fopen(cur_template_path);
+      if all(fgetl(fid) == -1)
+        cur_template = [];
+      else
+        cur_template = dlmread(cur_template_path);
+      end
+      fclose(fid);
+      
+      cur_templates{dataset_idx} = cur_template;
     end
     
-    % Extract templates.
-    cur_templates = ExtractTemplate(cur_audio_examples, cur_sample_rates);
-    templates(word_idx, :) = cur_templates.';   
+    templates(word_idx, :) = cur_templates;   
     labels{word_idx} = current_word;
   end
 end

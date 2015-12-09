@@ -1,3 +1,8 @@
+# Audio Files #
+###############
+*.wav
+*.mp3
+
 # Compiled source #
 ###################
 *.com
@@ -21,11 +26,7 @@
 *.tar
 *.zip
 *.mat
-
-# Audio Files #
-###############
-*.mp3
-*.wav
+*.m~
 
 # Logs and databases #
 ######################

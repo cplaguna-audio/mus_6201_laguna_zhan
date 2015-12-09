@@ -1,11 +1,18 @@
 function mfccs = MFCC(x, number_coeffs, fs)
-  NUMBER_BANDS = 26;
+  NUMBER_BANDS = 20;
   LOW_CUTOFF_HZ = 300;
-  HIGH_CUTOFF_HZ = 8000;
-  
+  HIGH_CUTOFF_HZ = 7000;
+    
   N = size(x, 1);
+  x_pre = zeros(size(x));
+  
+  % Premphasis
+  for idx = 2:N
+    x_pre(idx) = x(idx) - (0.95 * x(idx - 1));
+  end
+  
   window = hann(N);
-  x_windowed = x .* window;
+  x_windowed = x_pre .* window;
   x_freq = fft(x_windowed);
   x_mag = abs(x_freq);
   

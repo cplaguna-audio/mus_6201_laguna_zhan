@@ -5,7 +5,15 @@ function [features] = ExtractMFCCs(audio, block_size, hop_size, fs, num_coeffs)
   
   features = zeros(num_blocks, num_coeffs);
   for block_idx = 1:num_blocks
-    cur_block = blocked_audio(block_idx, :).';
-    features(block_idx, :) = MFCC(cur_block, num_coeffs, fs).';
+    next_block = blocked_audio(block_idx, :).';
+    features(block_idx, 1:num_coeffs) = MFCC(next_block, num_coeffs, fs).';
   end
+  
+%   for block_idx = 2:num_blocks - 1
+%     next_block = features(block_idx + 1, 1:num_coeffs);
+%     prev_block = features(block_idx - 1, 1:num_coeffs);
+%     features(block_idx, num_coeffs + 1:num_coeffs * 2) = (next_block - prev_block) / 2;
+%   end
+  
+  
 end

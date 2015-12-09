@@ -58,8 +58,10 @@ function word_classifier = TrainWordClassifier(train_templates, labels)
   for template_idx = 1:number_templates
     cur_template = word_classifier.templates{template_idx};
 
-    z_score_means = z_score_means + mean(cur_template).';
-    z_score_vars = z_score_vars + std(cur_template).';
+    if(~isempty(cur_template))
+      z_score_means = z_score_means + mean(cur_template).';
+      z_score_vars = z_score_vars + std(cur_template).';
+    end
   end
   
   z_score_means = z_score_means ./ number_templates;
@@ -67,8 +69,8 @@ function word_classifier = TrainWordClassifier(train_templates, labels)
   z_score_vars(z_score_vars < 0.01) = 0.01;
   
   word_classifier.z_score_means = z_score_means;
-  word_classifier.z_score_vars = z_score_vars;
-  
+  word_classifier.z_score_vars = z_score_vars * num_features;
+      
   % Apply whitening.
   number_templates = size(word_classifier.templates, 1);
   for template_idx = 1:number_templates
@@ -79,6 +81,9 @@ function word_classifier = TrainWordClassifier(train_templates, labels)
       cur_feature_vector = cur_template(block_idx, :);
       cur_feature_vector = cur_feature_vector - word_classifier.z_score_means.';
       cur_feature_vector = cur_feature_vector ./ word_classifier.z_score_vars.';
+      
+      non_feature_indices = find(word_classifier.z_score_vars == 0);
+      cur_feature_vector(non_feature_indices) = 0;
       cur_template(block_idx, :) = cur_feature_vector;
     end
     word_classifier.templates{template_idx} = cur_template;

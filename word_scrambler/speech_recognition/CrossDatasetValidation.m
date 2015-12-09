@@ -1,5 +1,7 @@
-function [error_rate] = CrossDatasetValidation(templates, labels, debug)
+function error_rates = CrossDatasetValidation(templates, labels, K, debug)
+
   num_folds = size(templates, 2);
+  error_rates = zeros(num_folds, 1);
   num_labels = size(labels, 1);
   % Loop through all folds.
   for fold_idx = 1:num_folds
@@ -16,7 +18,7 @@ function [error_rate] = CrossDatasetValidation(templates, labels, debug)
     for word_idx = 1:num_labels
       cur_test_template = test_templates{word_idx};
       truth_word = labels{word_idx};
-      predicted_word = Classify(word_classifier, cur_test_template);
+      predicted_word = Classify(word_classifier, cur_test_template, K);
       if(debug == true)
         disp(['Predicting word ' truth_word '...']); 
         disp(['  Prediction: *' predicted_word '*.']);  
@@ -29,8 +31,12 @@ function [error_rate] = CrossDatasetValidation(templates, labels, debug)
 
     current_error_rate = 1 - (num_correct / num_labels);
     error_rates(fold_idx) = current_error_rate;
-    disp(['Error rate for test dataset ' num2str(fold_idx) ': ' ...
-          num2str(current_error_rate * 100) '%']);
+    
+    if(debug == true)
+      disp(['Error rate for test dataset ' num2str(fold_idx) ': ' ...
+            num2str(current_error_rate * 100) '%']);
+    end
   end
-  error_rate = mean(error_rates);
+  
+  error_rates = error_rates.';
 end

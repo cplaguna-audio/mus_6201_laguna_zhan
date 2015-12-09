@@ -18,6 +18,6 @@ function y = SpectralFlatness(x_mag, centroid_bin)
     return;
   end
   
-  y = exp(numerator) / ((2 / K) * denominator);
+  y = exp(numerator / K) / (denominator / K);
 end
 

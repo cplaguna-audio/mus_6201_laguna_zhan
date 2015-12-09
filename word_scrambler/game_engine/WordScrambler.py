@@ -2,7 +2,13 @@ from Tkinter import *
 from math import floor
 import time
 from threading import Timer
+from threading import Thread
 from random import randint
+
+import matlab.engine
+import pyaudio
+import wave
+import os
 
 class WordScrambler:
 
@@ -17,9 +23,15 @@ class WordScrambler:
 
 
   def __init__(self):
+    # Start the matlab engine first.
+    self.matlab = matlab.engine.start_matlab();
+    self.matlab.addpath(self.matlab.genpath('/Users/christopherlaguna/Desktop/Georgia_Tech/Fall 2015/MIR/mus_6201_laguna_zhan/word_scrambler/speech_recognition'));
+
     # Create the interface.
     self.game_width = 400;
     debug = False
+    self.use_hard_coded_scramble = True
+    self.hard_coded_scramble = 3;
     
     self.TOTAL_NUMBER_SCRAMBLES = 15
     self.SCRAMBLE_PATH = "./scrambles/"
@@ -54,12 +66,9 @@ class WordScrambler:
     self.game_control_frame.grid(row = 4, sticky = E+W)
     Grid.columnconfigure(self.game_control_frame, 0, weight=1)
 
-    self.text_entry = Entry(self.game_control_frame)
-    self.text_entry.insert(0, "Enter Words Here")
-    self.text_entry.config(state = DISABLED)
-    self.text_entry.grid(row = 0, column = 0, sticky = W)
-    self.text_entry_button = Button(self.game_control_frame, text = "enter", command = self.check_word)
-    self.text_entry_button.grid(row = 1, column = 0, sticky = W)
+    self.record_button = Button(self.game_control_frame, text = "Record")
+    self.record_button.config(state = DISABLED, command = self.record_button_pressed)
+    self.record_button.grid(row = 0, column = 0, sticky = W)
     self.score_label = Label(self.game_control_frame, text = "score")
     self.score_label.grid(row = 0, column = 1, sticky = E)
 
@@ -73,6 +82,25 @@ class WordScrambler:
     self.begin_game_button.grid(row = 0, column = 0)
     self.end_game_button = Button(self.menu_frame, text = "End Game", command = self.end_game_pressed)
     self.end_game_button.grid(row = 0, column = 1)
+
+    # For audio recording.
+    self.CHUNK_SIZE = 1024 
+    self.FORMAT = pyaudio.paInt16
+    self.CHANNELS = 1 
+    self.RATE = 44100
+    self.MAX_RECORD_SECONDS = 5
+    self.recording = False
+    self.finished_writing_audio = False
+    self.audio_path = '../speech_recognition/interface/'
+    self.audio_name = 'current_word.wav'
+
+    # For matlab
+    self.classifier = '';
+
+    # Get the python IO ready.
+    self.do_stupid_first_recording();
+
+    self.buffer = []
 
     if(debug):
       title_frame.config(background = "green")
@@ -100,6 +128,9 @@ class WordScrambler:
     while(next_id == self.scramble_id):
       next_id = randint(0, self.TOTAL_NUMBER_SCRAMBLES)
     self.scramble_id = next_id
+
+    if(self.use_hard_coded_scramble):
+      self.scramble_id = self.hard_coded_scramble
 
     scramble_file_name = self.SCRAMBLE_PATH + 'scramble' + str(self.scramble_id) + '.txt'
     scramble_file = open(scramble_file_name)
@@ -129,7 +160,11 @@ class WordScrambler:
     self.prompt_text = "Find Words Out Of The Letters Below"
     self.remaining_words = list(self.scramble_words)
     self.num_words_displayed = 0;
-    self.text_entry.config(state = NORMAL)
+    self.record_button.config(state = NORMAL)
+
+    self.classifier = self.matlab.NewScramble(self.scramble_words, nargout=0);
+    print self.classifier
+
 
     self.update_display()
     Timer(1, self.advance_time).start()
@@ -144,12 +179,69 @@ class WordScrambler:
       self.game_over()
       self.update_display()
 
+  def record_button_pressed(self):
+    if(self.recording):
+      self.recording = False
+
+      while(not self.finished_writing_audio):
+        pass
+      
+      self.check_word()
+      self.buffer = []
+      self.finished_writing_audio = False
+
+      self.record_button.config(text="Record")
+
+      print "Recording stopped."
+    else:
+      self.recording = True
+
+      recording_thread = Thread(target = self.record, args = () )
+      recording_thread.start()
+
+      self.record_button.config(text="Stop")
+      print "Recording started."
+
+  def record(self):
+    p = pyaudio.PyAudio()
+    stream = p.open(format=self.FORMAT,
+                    channels=self.CHANNELS,
+                    rate=self.RATE,
+                    input=True,
+                    frames_per_buffer=self.CHUNK_SIZE) #buffer
+
+    print("* recording")
+
+    for i in range(0, int(self.RATE / self.CHUNK_SIZE * self.MAX_RECORD_SECONDS)):
+      if not self.recording:
+        break
+      data = stream.read(self.CHUNK_SIZE)
+      self.buffer.append(data)
+
+    print("* done recording")
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+    wf = wave.open(self.audio_path + self.audio_name, 'wb')
+    wf.setnchannels(self.CHANNELS)
+    wf.setsampwidth(p.get_sample_size(self.FORMAT))
+    wf.setframerate(self.RATE)
+    wf.writeframes(b''.join(self.buffer))
+    wf.close()
+
+    self.finished_writing_audio = True;
+
+    print("Done writing file.")
+
   def game_over(self):
     if(self.playing_game):
       self.playing_game = False
       self.time_remaining = 0
       self.prompt_text = "Game Over"
-      self.text_entry.config(state = DISABLED)
+      self.record_button.config(text="Record", state = DISABLED);
+      self.recording = False
       for word in self.remaining_words:
         self.add_word_to_game_label(word, 'red')
       self.update_display()
@@ -165,15 +257,18 @@ class WordScrambler:
 
   def check_word(self):
     if(self.check_if_playing_game()):
-      input_word = self.text_entry.get()
-      if input_word in self.remaining_words:
-        self.remaining_words.remove(input_word)
-        self.score = self.score + self.get_word_score(input_word)
-        self.prompt_text = "Nice one! Keep on guessing."
-        self.add_word_to_game_label(input_word, 'black')
+      new_word = self.matlab.WhatWordIsthis(self.audio_name, self.remaining_words)
+
+      print new_word
+
+      if(not new_word):
+        self.prompt_text = "Terrible. Just terrible. Keep on guessing."
         self.update_display()
       else:
-        self.prompt_text = "No way. Keep on guessing."
+        self.remaining_words.remove(new_word)
+        self.score = self.score + self.get_word_score(new_word)
+        self.prompt_text = "Nice one! Keep on guessing."
+        self.add_word_to_game_label(new_word, 'black')
         self.update_display()
   
   def get_word_score(self, word):
@@ -208,15 +303,30 @@ class WordScrambler:
       return False
     return True
 
-# 	def record_pressed():
-#		global recording
-#		if(recording_state):
-#			recording_state = False
-#			print "Recording Stopped!"
-#			record_button.config(text = "Start Recording")
-#		else:
-#			recording_state = True
-#			print "Recording Started!"
-#			record_button.config(text = "Stop Recording")
+  def do_stupid_first_recording(self):
+    p = pyaudio.PyAudio()
+    stream = p.open(format=self.FORMAT,
+                    channels=self.CHANNELS,
+                    rate=self.RATE,
+                    input=True,
+                    frames_per_buffer=self.CHUNK_SIZE) #buffer
+    frames = []
+
+    for i in range(0, int(100)):
+      data = stream.read(self.CHUNK_SIZE)
+      frames.append(data)
+
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+    wf = wave.open(self.audio_path + self.audio_name, 'wb')
+    wf.setnchannels(self.CHANNELS)
+    wf.setsampwidth(p.get_sample_size(self.FORMAT))
+    wf.setframerate(self.RATE)
+    wf.writeframes(b''.join(frames))
+    wf.close()
+
+    self.matlab.WhatWordIsthis(self.audio_name, []);
 
 game = WordScrambler()

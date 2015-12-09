@@ -18,12 +18,14 @@ function [selected_features, error_rates] = ForwardSelection(templates, labels)
       for r_idx = 1:num_rows
         for c_idx = 1:num_cols
           cur_template = templates{r_idx, c_idx};
-          cur_template = cur_template(:, candidate_indices);
+          if(~isempty(cur_template))
+            cur_template = cur_template(:, candidate_indices);
+          end
           candidate_templates{r_idx, c_idx} = cur_template;
         end
       end
       
-      cur_error = CrossDatasetValidation(candidate_templates, labels, false)
+      cur_error = CrossDatasetValidation(candidate_templates, labels, false);
       if cur_error < cur_best_error
         cur_best_error = cur_error;
         cur_best_idx = candidate_idx;

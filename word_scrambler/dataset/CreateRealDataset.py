@@ -37,6 +37,7 @@ class WordRecorder:
 
   def record(self):
     self.recording = True
+    
     p = pyaudio.PyAudio()
     frames = []
 
